@@ -162,6 +162,130 @@
     - mounts_8 is not changed
 
 ####################################################################
+## tmpfs ###########################################################
+####################################################################
+
+- name: mounts
+  docker_container:
+    image: "{{ docker_test_image_alpine }}"
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - target: /cache
+      type: tmpfs
+      tmpfs_mode: "1777"
+      tmpfs_size: "1GB"
+    - source: /
+      target: /whatever
+      type: bind
+      read_only: no
+  register: tmpfs_1
+
+- name: tmpfs (idempotency)
+  docker_container:
+    image: "{{ docker_test_image_alpine }}"
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - source: /
+      target: /whatever
+      type: bind
+      read_only: no
+    - target: /cache
+      type: tmpfs
+      tmpfs_mode: "1777"
+      tmpfs_size: "1GB"
+  register: tmpfs_2
+
+- name: tmpfs (less mounts)
+  docker_container:
+    image: "{{ docker_test_image_alpine }}"
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - target: /cache
+      type: tmpfs
+      tmpfs_mode: "1777"
+      tmpfs_size: "1GB"
+  register: tmpfs_3
+
+- name: tmpfs (more mounts)
+  docker_container:
+    image: "{{ docker_test_image_alpine }}"
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - target: /cache
+      type: tmpfs
+      tmpfs_mode: "1777"
+      tmpfs_size: "1GB"
+    - source: /tmp
+      target: /somewhereelse
+      type: bind
+      read_only: yes
+    force_kill: yes
+  register: tmpfs_4
+
+- name: change mode
+  docker_container:
+    image: "{{ docker_test_image_alpine }}"
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - target: /cache
+      type: tmpfs
+      tmpfs_mode: "1700"
+      tmpfs_size: "1GB"
+    - source: /tmp
+      target: /somewhereelse
+      type: bind
+      read_only: yes
+    force_kill: true
+  register: tmpfs_5
+
+- name: change size
+  docker_container:
+    image: "{{ docker_test_image_alpine }}"
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    mounts:
+    - target: /cache
+      type: tmpfs
+      tmpfs_mode: "1700"
+      tmpfs_size: "2GB"
+    - source: /tmp
+      target: /somewhereelse
+      type: bind
+      read_only: yes
+    force_kill: true
+  register: tmpfs_5
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - mounts_1 is changed
+    - mounts_2 is not changed
+    - mounts_3 is not changed
+    - mounts_4 is changed
+    - mounts_5 is changed
+    - mounts_6 is failed
+    - "'The mount point \"/x\" appears twice in the mounts option' == mounts_6.msg"
+    - mounts_7 is changed
+    - mounts_8 is not changed
+
+####################################################################
 ## mounts + volumes ################################################
 ####################################################################
 

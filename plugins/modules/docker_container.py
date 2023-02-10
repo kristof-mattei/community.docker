@@ -1164,6 +1164,18 @@ EXAMPLES = '''
     healthcheck:
       # The "NONE" check needs to be specified
       test: ["NONE"]
+      
+- name: Create a tmpfs with a size and mode
+  community.docker.docker_container:
+    name: tmpfs test
+    image: ubuntu:22.04
+    state: started
+    mount
+    mounts:
+      - type: tmpfs
+        target: /cache
+        tmpfs_mode: "1700" # only readable to the owner
+        tmpfs_size: "16G"
 
 - name: Start container with block device read limit
   community.docker.docker_container:
